@@ -10,32 +10,43 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
 import requests
 import urllib
 
 
 HEADERS = {
-    "Content-type": "application/x-www-form-urlencoded",
-    "Accept": "text/plain",
-    "User-Agent": "python"
+    'Content-type': 'application/x-www-form-urlencoded',
+    'Accept': 'text/plain',
+    'User-Agent': 'python'
 }
 
 
 class Client(object):
 
-    def __init__(self, endpoint, username, password):
+    def __init__(self, endpoint, user):
+        """
+
+        :param endpoint: the url of cas server. like: http://127.0.0.1/cas
+        :param user:     the login user info for cas.
+                         For default cas user like this
+                         {
+                             "username": "casuser",
+                             "password": "Mellon"
+                         },
+                         of course, you could add some other parameters to
+                         adapt to you custom cas server.
+        """
         self.endpoint = endpoint
-        self.username = username
-        self.password = password
+        self.user = user
 
     def grant_tgt(self):
         url = self.endpoint + '/v1/tickets'
-        user = {'username': self.username, 'password': self.password}
-        resp = requests.post(url, data=urllib.urlencode(user), headers=HEADERS)
+        resp = requests.post(url,
+                             data=urllib.urlencode(self.user),
+                             headers=HEADERS)
         if resp.status_code != requests.codes.created:
             raise resp.raise_for_status()
-        return resp.text
+        return resp.headers.get('Location').split('/')[-1]
 
     def grant_st(self, service):
         url = self.endpoint + '/v1/tickets/%s' % self.grant_tgt()
